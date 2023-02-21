@@ -1,0 +1,9 @@
+# Ignore artifacts:
+build
+.vscode-test/
+.idea
+out/
+dist/
+node_modules/
+public
+!/yarn.lock
