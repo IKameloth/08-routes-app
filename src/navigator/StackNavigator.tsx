@@ -14,8 +14,8 @@ const StackNavigator = () => {
         }
       }}
     >
-      <Stack.Screen name="MapScreen" component={MapScreen} />
       <Stack.Screen name="PermissionScreen" component={PermissionScreen} />
+      <Stack.Screen name="MapScreen" component={MapScreen} />
     </Stack.Navigator>
   )
 }
