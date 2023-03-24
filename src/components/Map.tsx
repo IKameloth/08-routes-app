@@ -1,6 +1,6 @@
-import React, { useRef } from 'react'
+import React, { useEffect, useState, useRef } from 'react'
 import { StyleSheet, View } from 'react-native'
-import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps'
+import MapView, { Polyline, PROVIDER_GOOGLE } from 'react-native-maps'
 import { useLocation } from '../hooks/useLocation'
 import { LoadingScreen } from '../screens/LoadingScreen'
 import { Fab } from './Fab'
@@ -18,11 +18,43 @@ const styles = StyleSheet.create({
 })
 
 export const Map = () => {
-  const { hasLocation, initialPosition, getCurrentLocation } = useLocation()
+  const [showPolyline, setShowPolyline] = useState(true)
+  const {
+    hasLocation,
+    initialPosition,
+    getCurrentLocation,
+    followUserLocation,
+    userLocation,
+    stopFollowUserLocation,
+    routeLines
+  } = useLocation()
+
   const mapViewRef = useRef<MapView>()
+  const following = useRef<boolean>(true)
+
+  useEffect(() => {
+    followUserLocation()
+    return () => {
+      stopFollowUserLocation()
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!following.current) return
+
+    const { latitude, longitude } = userLocation
+
+    mapViewRef.current?.animateCamera({
+      center: {
+        latitude,
+        longitude
+      }
+    })
+  }, [userLocation])
 
   const centerPosition = async () => {
     const { latitude, longitude } = await getCurrentLocation()
+    following.current = true
 
     mapViewRef.current?.animateCamera({
       center: {
@@ -43,27 +75,25 @@ export const Map = () => {
         showsUserLocation
         provider={PROVIDER_GOOGLE} // remove if not using Google Maps
         style={styles.map}
-        region={{
+        initialRegion={{
           latitude: initialPosition.latitude,
           longitude: initialPosition.longitude,
           latitudeDelta: 0.015,
           longitudeDelta: 0.0121
         }}
+        onTouchStart={() => (following.current = false)}
       >
-        {/* <Marker
-          image={require('../assets/custom-marker.png')}
-          coordinate={{
-            latitude: 37.78825,
-            longitude: -122.4324
-          }}
-          title={'title'}
-          description={'description'}
-        /> */}
+        {showPolyline && <Polyline coordinates={routeLines} strokeColor="purple" strokeWidth={3} />}
       </MapView>
       <Fab
         iconName="compass-outline"
         onPress={centerPosition}
         style={{ position: 'absolute', bottom: 20, right: 20 }}
+      />
+      <Fab
+        iconName="brush-outline"
+        onPress={() => setShowPolyline(!showPolyline)}
+        style={{ position: 'absolute', bottom: 80, right: 20 }}
       />
     </View>
   )
